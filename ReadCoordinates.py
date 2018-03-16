@@ -3,36 +3,31 @@ import datetime
 import os
 import re
 from ScriptWorkingStatistics import timing
-
-
 def calculateDistance(x1, y1, x2, y2, ProjectionFile):
     # dist = math.sqrt((x2-x1)**2 +(y2-y1)**2)
     pnt_Geometry = arcpy.PointGeometry(arcpy.Point(x1, y1), arcpy.SpatialReference(ProjectionFile))
     res = pnt_Geometry.angleAndDistanceTo(
         arcpy.PointGeometry(arcpy.Point(x2, y2), arcpy.SpatialReference(ProjectionFile)))
     return res
-
-
 t = timing()
 print "Script Has Been Initited"
 ## INPUTS
 arcpy.env.overwriteOutput = True
-ScriptRunFolder = u'C:\\Users\\HPZ640\\Desktop\\WORKLOAD\\DHI\\'
-GeoDataBaseFolderLocation = ScriptRunFolder + 'Try.001.gdb'
-CADFileLocation = ScriptRunFolder + 'kk.DWG'
-ProjectionFile = ScriptRunFolder + '8111.prj'
+ScriptRunFolder = os.path.dirname(__file__)
+GeoDataBaseFolderLocation = ScriptRunFolder + u"/Output/" + 'Try.001.gdb'
+CADFileLocation = ScriptRunFolder + u'/Input/' + 'kk.DWG'
+ProjectionFile = ScriptRunFolder + u'/Projection/8111.prj'
 CrossSectionIdentifier = u"PL_TOTFKM"
-StreamIdentifier = "2"
-ProjectionFile = "8111.prj"
+NCNFileLocation = ScriptRunFolder + u'/Input/kk.NCN'
 
+
+StreamIdentifier = "2"
 ## TODO  NCN file read
 NameOftheCrossSection = "KesikKopru"
-NCNFileLocation = "kk.NCN"
 data = []
 with open(NCNFileLocation, 'rb') as f:
     for line in f:
-        tmp = []
-        tmp2 = []
+        tmp, tmp2 = [], []
         tmp2 = (line.split())
         tmp.extend(tmp2[0].split('_'))
         tmp.extend([float(tmp2[1]), float(tmp2[2]), float(tmp2[3])])
@@ -79,14 +74,12 @@ for i in liste_of_groupings:
 b = sorted(a, key=lambda l: (l[0], l[1]), reverse=False)
 # arcpy.Delete_management(gdblocation)
 print t.incremental_runtime()
-f = open('DataExtract_' + datetime.datetime.today().strftime('%y%m%d%H%M') + '.txt', 'w')
+f = open(ScriptRunFolder + '/Output/DataExtract_' + datetime.datetime.today().strftime('%y%m%d%H%M') + '.txt', 'w')
 for en, r in enumerate(list(set([row[0] for row in f_data]))):
     f.write("1\n%s\n" % NameOftheCrossSection)
     f.write("%20.3lf" % (b[en][0] * 1000 + b[en][1]))
     inner_temp = [row for row in f_data if row[0] == r]
     coordinates = [[row[2], row[3]] for row in inner_temp]
-    arcpy.SelectLayerByLocation_management(gdblocation + "\\Annotation", "WITHIN_A_DISTANCE", arcpy.Multipoint(
-        arcpy.Array([arcpy.Point(*coords) for coords in coordinates])), 5)
     coordinate_min = inner_temp[0][2:4]
     coordinate_max = inner_temp[-1][2:4]
     f.write("\nCOORDINATES\n     %s  %12.3lf %12.3lf %12.3lf %12.3lf\n" % (
