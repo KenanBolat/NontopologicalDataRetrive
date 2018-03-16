@@ -19,8 +19,6 @@ CADFileLocation = ScriptRunFolder + u'/Input/' + 'kk.DWG'
 ProjectionFile = ScriptRunFolder + u'/Projection/8111.prj'
 CrossSectionIdentifier = u"PL_TOTFKM"
 NCNFileLocation = ScriptRunFolder + u'/Input/kk.NCN'
-
-
 StreamIdentifier = "2"
 ## TODO  NCN file read
 NameOftheCrossSection = "KesikKopru"
