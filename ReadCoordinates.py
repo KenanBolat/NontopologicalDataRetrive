@@ -74,6 +74,7 @@ for i in liste_of_groupings:
 b = sorted(a, key=lambda l: (l[0], l[1]), reverse=False)
 # arcpy.Delete_management(gdblocation)
 print t.incremental_runtime()
+
 f = open(ScriptRunFolder + '/Output/DataExtract_' + datetime.datetime.today().strftime('%y%m%d%H%M') + '.txt', 'w')
 for en, r in enumerate(list(set([row[0] for row in f_data]))):
     f.write("1\n%s\n" % NameOftheCrossSection)
