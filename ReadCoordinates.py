@@ -16,9 +16,11 @@ def calculateDistance(x1, y1, x2, y2, ProjectionFile):
 t = timing()
 print "Script Has Been Initited"
 ## INPUTS
+
+date_tag = datetime.datetime.today().strftime("%y%m%d%H%M")
 arcpy.env.overwriteOutput = True
 ScriptRunFolder = os.path.dirname(__file__)
-GeoDataBaseFolderLocation = ScriptRunFolder + u"/Output/" + 'Try.001.gdb'
+GeoDataBaseFolderLocation = ScriptRunFolder + u"/Output/" + date_tag + ".gdb"
 CADFileLocation = ScriptRunFolder + u'/Input/' + 'kk.DWG'
 ProjectionFile = ScriptRunFolder + u'/Projection/8111.prj'
 CrossSectionIdentifier = u"PL_TOTFKM"
@@ -27,20 +29,22 @@ StreamIdentifier = "2"
 ## TODO  NCN file read
 NameOftheCrossSection = "KesikKopru"
 data = []
+
 with open(NCNFileLocation, 'rb') as f:
     for line in f:
-        tmp, tmp2 = [], []
+        tmp = []
         tmp2 = (line.split())
         tmp.extend(tmp2[0].split('_'))
         tmp.extend([float(tmp2[1]), float(tmp2[2]), float(tmp2[3])])
         tmp[0] = int(tmp[0])
         tmp[1] = int(tmp[1])
         data.append(tmp)
-f_data = sorted(data, key=lambda l: (l[0], l[1]), reverse=False)
-cumulative = []
+f_data = sorted(data, key=lambda l: (l[0], l[1]), reverse=False)  ## Sort 2d the list by two columns
 counter = 0
+print "Here"
 print t.incremental_runtime()
 for en, points in enumerate(f_data):
+    print float(en) / len(f_data) * 100
     if f_data[en - 1][0] == points[0]:
         counter = counter + 1
     elif abs(f_data[en - 1][0] - points[0]) == 1:
@@ -52,7 +56,7 @@ for en, points in enumerate(f_data):
         f_data[en].extend([0])
 print t.incremental_runtime()
 
-ConvertedCADName = u'TempCad' + datetime.datetime.today().strftime("%y%m%d%H%M")
+ConvertedCADName = u'TempCad'
 if not (arcpy.Exists(GeoDataBaseFolderLocation)):
     arcpy.CreateFileGDB_management(os.path.dirname(GeoDataBaseFolderLocation),
                                    os.path.basename(GeoDataBaseFolderLocation))
@@ -65,7 +69,7 @@ print "CAD has been converted"
 print t.incremental_runtime()
 gdblocation = GeoDataBaseFolderLocation + "/" + ConvertedCADName
 liste_of_groupings = list(set(
-    [row[1] for row in arcpy.da.SearchCursor(gdblocation + "\\Annotation", ["Layer", "TextString"]) if
+    [row[1] for row in arcpy.da.SearchCursor(gdblocation + "/Annotation", ["Layer", "TextString"]) if
      row[0].find(CrossSectionIdentifier) != -1]))
 re_pattern = '(?=[0-9]{1,}\+).|(?<=[0-9]\+).+$'
 p = re.compile(re_pattern)
@@ -120,6 +124,6 @@ for en, r in enumerate(list(set([row[0] for row in f_data]))):
     f.write('*' * 31)
     f.write('\n')
 f.close()
-arcpy.Delete_management(gdblocation)
+arcpy.Delete_management(GeoDataBaseFolderLocation)
 print "Script Has been Finalized"
 print t.runtime()
