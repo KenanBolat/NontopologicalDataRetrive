@@ -1,4 +1,8 @@
-import arcpy
+try:
+    import arcpy
+except ImportError as IE:
+    print IE.message
+
 import datetime
 import os
 import re
