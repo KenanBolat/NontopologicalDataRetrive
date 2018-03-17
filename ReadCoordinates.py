@@ -61,7 +61,7 @@ print t.incremental_runtime()
 arcpy.CADToGeodatabase_conversion(CADFileLocation, GeoDataBaseFolderLocation, ConvertedCADName, 1000)
 print "CAD has been converted"
 print t.incremental_runtime()
-gdblocation = GeoDataBaseFolderLocation + "\\" + ConvertedCADName
+gdblocation = GeoDataBaseFolderLocation + "/" + ConvertedCADName
 liste_of_groupings = list(set(
     [row[1] for row in arcpy.da.SearchCursor(gdblocation + "\\Annotation", ["Layer", "TextString"]) if
      row[0].find(CrossSectionIdentifier) != -1]))
@@ -73,15 +73,25 @@ for i in liste_of_groupings:
     m = p.findall(i)
     a.append([int(m[0]), float(m[1].replace('</UND>', ''))])
 b = sorted(a, key=lambda l: (l[0], l[1]), reverse=False)
-# arcpy.Delete_management(gdblocation)
+
 print t.incremental_runtime()
 f = open(ScriptRunFolder + '/Output/DataExtract_' + datetime.datetime.today().strftime('%y%m%d%H%M') + '.txt', 'w')
 for en, r in enumerate(list(set([row[0] for row in f_data]))):
-    f.write("1\n%s\n" % NameOftheCrossSection)
-    f.write("%20.3lf" % (b[en][0] * 1000 + b[en][1]))
     inner_temp = [row for row in f_data if row[0] == r]
     coordinates = [[row[2], row[3]] for row in inner_temp]
     coordinate_min = inner_temp[0][2:4]
+    arcpy.MakeFeatureLayer_management(gdblocation + "/Annotation", "Annotation_001")
+    arcpy.SelectLayerByLocation_management('Annotation_001', "WITHIN_A_DISTANCE", arcpy.Multipoint(arcpy.Array([arcpy.Point(*coords) for coords in coordinates])), 5)
+    annoQueryResult = [[row[0], row[1]] for row in arcpy.da.SearchCursor('Annotation_001', ["Layer", "TextString"])]
+    Chainage = []
+    for q in annoQueryResult:
+        if q[0] == CrossSectionIdentifier:
+            m2 = p.findall(q[1])
+            Chainage.append([int(m2[0]), float(m2[1].replace('</UND>', ''))])
+    print 'Length of Chainge is :: ', len(Chainage)
+    # arcpy.SelectLayerByLocation_management(gdblocation + "\\Annotation", "WITHIN_A_DISTANCE", arcpy.Multipoint(arcpy.Array([arcpy.Point(*coords) for coords in coordinates])), 5)
+    f.write("1\n%s\n" % NameOftheCrossSection)
+    f.write("%20.3lf" % (Chainage[0][0] * 1000 + Chainage[0][1]))
     coordinate_max = inner_temp[-1][2:4]
     f.write("\nCOORDINATES\n     %s  %12.3lf %12.3lf %12.3lf %12.3lf\n" % (
     StreamIdentifier, coordinate_min[0], coordinate_min[1], coordinate_max[0], coordinate_max[1]))
@@ -108,5 +118,6 @@ for en, r in enumerate(list(set([row[0] for row in f_data]))):
     f.write('*' * 31)
     f.write('\n')
 f.close()
+arcpy.Delete_management(gdblocation)
 print "Script Has been Finalized"
 print t.runtime()
